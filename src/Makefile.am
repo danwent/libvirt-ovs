@@ -94,6 +94,7 @@ UTIL_SOURCES =							\
 		util/virkeymaps.h				\
 		util/virnetdev.h util/virnetdev.c		\
 		util/virnetdevbandwidth.h util/virnetdevbandwidth.c \
+		util/virnetdevopenvswitch.h util/virnetdevopenvswitch.c \
 		util/virnetdevbridge.h util/virnetdevbridge.c	\
 		util/virnetdevmacvlan.c util/virnetdevmacvlan.h	\
 		util/virnetdevtap.h util/virnetdevtap.c		\
@@ -133,6 +134,7 @@ LOCK_DRIVER_SANLOCK_SOURCES = \
 
 NETDEV_CONF_SOURCES =						\
 		conf/netdev_bandwidth_conf.h conf/netdev_bandwidth_conf.c \
+		conf/netdev_openvswitch_conf.h conf/netdev_openvswitch_conf.c \
 		conf/netdev_vport_profile_conf.h conf/netdev_vport_profile_conf.c
 
 # XML configuration format handling sources

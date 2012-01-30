@@ -41,6 +41,7 @@
 # include "virnetdevmacvlan.h"
 # include "sysinfo.h"
 # include "virnetdevvportprofile.h"
+# include "virnetdevopenvswitch.h"
 # include "virnetdevbandwidth.h"
 
 /* Different types of hypervisor */
@@ -525,6 +526,7 @@ enum virDomainNetType {
     VIR_DOMAIN_NET_TYPE_BRIDGE,
     VIR_DOMAIN_NET_TYPE_INTERNAL,
     VIR_DOMAIN_NET_TYPE_DIRECT,
+    VIR_DOMAIN_NET_TYPE_OPENVSWITCH,
 
     VIR_DOMAIN_NET_TYPE_LAST,
 };
@@ -574,6 +576,9 @@ struct _virDomainActualNetDef {
             int mode; /* enum virMacvtapMode from util/macvtap.h */
             virNetDevVPortProfilePtr virtPortProfile;
         } direct;
+        struct {
+            virNetDevOpenvswitchPortPtr ovsPort;
+        } ovs;
     } data;
     virNetDevBandwidthPtr bandwidth;
 };
@@ -628,6 +633,9 @@ struct _virDomainNetDef {
             int mode; /* enum virMacvtapMode from util/macvtap.h */
             virNetDevVPortProfilePtr virtPortProfile;
         } direct;
+        struct {
+            virNetDevOpenvswitchPortPtr ovsPort;
+        } ovs;
     } data;
     struct {
         bool sndbuf_specified;
@@ -1859,6 +1867,9 @@ virNetDevVPortProfilePtr
 virDomainNetGetActualDirectVirtPortProfile(virDomainNetDefPtr iface);
 virNetDevBandwidthPtr
 virDomainNetGetActualBandwidth(virDomainNetDefPtr iface);
+
+virNetDevOpenvswitchPortPtr
+virDomainNetGetActualOpenvswitchPortPtr(virDomainNetDefPtr iface);
 
 int virDomainControllerInsert(virDomainDefPtr def,
                               virDomainControllerDefPtr controller);
