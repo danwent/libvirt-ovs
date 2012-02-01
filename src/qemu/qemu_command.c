@@ -221,6 +221,13 @@ qemuNetworkIfaceConnect(virDomainDefPtr def,
             virReportOOMError();
             return -1;
         }
+    } else if (actualType == VIR_DOMAIN_NET_TYPE_OPENVSWITCH) {
+        char *bridge =
+               virDomainNetGetActualOpenvswitchBrname(net);
+        if (!(brname = strdup(bridge))) {
+            virReportOOMError();
+            return -1;
+        }
     } else {
         qemuReportError(VIR_ERR_INTERNAL_ERROR,
                         _("Network type %d is not supported"),
@@ -247,7 +254,9 @@ qemuNetworkIfaceConnect(virDomainDefPtr def,
     memcpy(tapmac, net->mac, VIR_MAC_BUFLEN);
     tapmac[0] = 0xFE; /* Discourage bridge from using TAP dev MAC */
     err = virNetDevTapCreateInBridgePort(brname, &net->ifname, tapmac,
-                                         vnet_hdr, true, &tapfd);
+                                         vnet_hdr, true, &tapfd,
+                                         virDomainNetGetActualType(net),
+                                         virDomainNetGetActualOpenvswitchInterfaceId(net));
     virDomainAuditNetDevice(def, net, "/dev/net/tun", tapfd >= 0);
     if (err < 0) {
         if (template_ifname)
@@ -2539,6 +2548,7 @@ qemuBuildHostNetStr(virDomainNetDefPtr net,
     switch (netType) {
     case VIR_DOMAIN_NET_TYPE_NETWORK:
     case VIR_DOMAIN_NET_TYPE_BRIDGE:
+    case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
     case VIR_DOMAIN_NET_TYPE_DIRECT:
         virBufferAddLit(&buf, "tap");
         virBufferAsprintf(&buf, "%cfd=%s", type_sep, tapfd);
@@ -2587,6 +2597,7 @@ qemuBuildHostNetStr(virDomainNetDefPtr net,
         case VIR_DOMAIN_NET_TYPE_ETHERNET:
         case VIR_DOMAIN_NET_TYPE_NETWORK:
         case VIR_DOMAIN_NET_TYPE_BRIDGE:
+        case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
         case VIR_DOMAIN_NET_TYPE_INTERNAL:
         case VIR_DOMAIN_NET_TYPE_DIRECT:
         case VIR_DOMAIN_NET_TYPE_LAST:
@@ -4632,7 +4643,8 @@ qemuBuildCommandLine(virConnectPtr conn,
 
             actualType = virDomainNetGetActualType(net);
             if (actualType == VIR_DOMAIN_NET_TYPE_NETWORK ||
-                actualType == VIR_DOMAIN_NET_TYPE_BRIDGE) {
+                actualType == VIR_DOMAIN_NET_TYPE_BRIDGE ||
+                actualType == VIR_DOMAIN_NET_TYPE_OPENVSWITCH) {
                 int tapfd = qemuNetworkIfaceConnect(def, conn, driver, net,
                                                     qemuCaps);
                 if (tapfd < 0)

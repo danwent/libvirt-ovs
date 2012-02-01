@@ -378,6 +378,8 @@ virDomainNetGetActualBridgeName;
 virDomainNetGetActualDirectDev;
 virDomainNetGetActualDirectMode;
 virDomainNetGetActualDirectVirtPortProfile;
+virDomainNetGetActualOpenvswitchBrname;
+virDomainNetGetActualOpenvswitchInterfaceId;
 virDomainNetGetActualType;
 virDomainNetIndexByMac;
 virDomainNetInsert;
@@ -1236,6 +1238,10 @@ virNetDevMacVLanCreate;
 virNetDevMacVLanDelete;
 virNetDevMacVLanCreateWithVPortProfile;
 virNetDevMacVLanDeleteWithVPortProfile;
+
+
+# virnetdevopenvswitch.h
+virNetDevOpenvswitchAddPort;
 
 
 # virnetdevtap.h

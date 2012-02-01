@@ -279,7 +279,8 @@ VIR_ENUM_IMPL(virDomainNet, VIR_DOMAIN_NET_TYPE_LAST,
               "network",
               "bridge",
               "internal",
-              "direct")
+              "direct",
+              "openvswitch")
 
 VIR_ENUM_IMPL(virDomainNetBackend, VIR_DOMAIN_NET_BACKEND_TYPE_LAST,
               "default",
@@ -945,6 +946,10 @@ virDomainActualNetDefFree(virDomainActualNetDefPtr def)
     case VIR_DOMAIN_NET_TYPE_BRIDGE:
         VIR_FREE(def->data.bridge.brname);
         break;
+    case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
+        VIR_FREE(def->data.ovs.brname);
+        VIR_FREE(def->data.ovs.interfaceId);
+        break;
     case VIR_DOMAIN_NET_TYPE_DIRECT:
         VIR_FREE(def->data.direct.linkdev);
         VIR_FREE(def->data.direct.virtPortProfile);
@@ -996,6 +1001,11 @@ void virDomainNetDefFree(virDomainNetDefPtr def)
     case VIR_DOMAIN_NET_TYPE_DIRECT:
         VIR_FREE(def->data.direct.linkdev);
         VIR_FREE(def->data.direct.virtPortProfile);
+        break;
+
+    case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
+        VIR_FREE(def->data.ovs.brname);
+        VIR_FREE(def->data.ovs.interfaceId);
         break;
 
     case VIR_DOMAIN_NET_TYPE_USER:
@@ -3606,6 +3616,7 @@ virDomainActualNetDefParseXML(xmlNodePtr node,
         goto error;
     }
     if (actual->type != VIR_DOMAIN_NET_TYPE_BRIDGE &&
+        actual->type != VIR_DOMAIN_NET_TYPE_OPENVSWITCH &&
         actual->type != VIR_DOMAIN_NET_TYPE_DIRECT &&
         actual->type != VIR_DOMAIN_NET_TYPE_NETWORK) {
         virDomainReportError(VIR_ERR_INTERNAL_ERROR,
@@ -3616,6 +3627,14 @@ virDomainActualNetDefParseXML(xmlNodePtr node,
 
     if (actual->type == VIR_DOMAIN_NET_TYPE_BRIDGE) {
         actual->data.bridge.brname = virXPathString("string(./source[1]/@bridge)", ctxt);
+    } else if (actual->type == VIR_DOMAIN_NET_TYPE_OPENVSWITCH) {
+        actual->data.ovs.brname = virXPathString("string(./source[1]/@bridge)", ctxt);
+
+        xmlNodePtr ovsPortNode = virXPathNode("./openvswitchport", ctxt);
+        if (ovsPortNode &&
+            (!(actual->data.ovs.interfaceId =
+               virNetDevOpenvswitchPortParseInterfaceId(ovsPortNode))))
+            goto error;
     } else if (actual->type == VIR_DOMAIN_NET_TYPE_DIRECT) {
         xmlNodePtr virtPortNode;
 
@@ -3693,6 +3712,7 @@ virDomainNetDefParseXML(virCapsPtr caps,
     char *devaddr = NULL;
     char *mode = NULL;
     char *linkstate = NULL;
+    char *interfaceId = NULL;
     virNWFilterHashTablePtr filterparams = NULL;
     virNetDevVPortProfilePtr virtPort = NULL;
     virDomainActualNetDefPtr actual = NULL;
@@ -3736,6 +3756,10 @@ virDomainNetDefParseXML(virCapsPtr caps,
                        (def->type == VIR_DOMAIN_NET_TYPE_BRIDGE) &&
                        (xmlStrEqual(cur->name, BAD_CAST "source"))) {
                 bridge = virXMLPropString(cur, "bridge");
+            } else if ((bridge == NULL) &&
+                       (def->type == VIR_DOMAIN_NET_TYPE_OPENVSWITCH) &&
+                       (xmlStrEqual(cur->name, BAD_CAST "source"))) {
+                bridge = virXMLPropString(cur, "bridge");
             } else if ((dev == NULL) &&
                        (def->type == VIR_DOMAIN_NET_TYPE_ETHERNET ||
                         def->type == VIR_DOMAIN_NET_TYPE_DIRECT) &&
@@ -3747,6 +3771,11 @@ virDomainNetDefParseXML(virCapsPtr caps,
                         (def->type == VIR_DOMAIN_NET_TYPE_NETWORK)) &&
                        xmlStrEqual(cur->name, BAD_CAST "virtualport")) {
                 if (!(virtPort = virNetDevVPortProfileParse(cur)))
+                    goto error;
+            } else if ((interfaceId == NULL) &&
+                       ((def->type == VIR_DOMAIN_NET_TYPE_OPENVSWITCH) &&
+                       xmlStrEqual(cur->name, BAD_CAST "openvswitchport"))) {
+                if (!(interfaceId = virNetDevOpenvswitchPortParseInterfaceId(cur)))
                     goto error;
             } else if ((network == NULL) &&
                        ((def->type == VIR_DOMAIN_NET_TYPE_SERVER) ||
@@ -3883,6 +3912,17 @@ virDomainNetDefParseXML(virCapsPtr caps,
             def->data.bridge.ipaddr = address;
             address = NULL;
         }
+        break;
+
+    case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
+        if (bridge == NULL) {
+            virDomainReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+    _("No <source> 'bridge' attribute specified with <interface type='openvswitch'/>"));
+            goto error;
+        }
+        def->data.ovs.brname = strdup(bridge);
+        if (interfaceId != NULL)
+        def->data.ovs.interfaceId = strdup(interfaceId);
         break;
 
     case VIR_DOMAIN_NET_TYPE_CLIENT:
@@ -10279,6 +10319,7 @@ virDomainActualNetDefFormat(virBufferPtr buf,
     }
 
     if (def->type != VIR_DOMAIN_NET_TYPE_BRIDGE &&
+        def->type != VIR_DOMAIN_NET_TYPE_OPENVSWITCH &&
         def->type != VIR_DOMAIN_NET_TYPE_DIRECT &&
         def->type != VIR_DOMAIN_NET_TYPE_NETWORK) {
         virDomainReportError(VIR_ERR_INTERNAL_ERROR,
@@ -10311,6 +10352,14 @@ virDomainActualNetDefFormat(virBufferPtr buf,
         if (virNetDevVPortProfileFormat(def->data.direct.virtPortProfile, buf) < 0)
             goto error;
         virBufferAdjustIndent(buf, -8);
+        break;
+    case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
+        virBufferEscapeString(buf, "      <source bridge='%s'/>\n",
+                              def->data.ovs.brname);
+        virBufferAdjustIndent(buf, 6);
+        if (virNetDevOpenvswitchPortFormat(def->data.ovs.interfaceId, buf) < 0)
+            return -1;
+        virBufferAdjustIndent(buf, -6);
         break;
     default:
         break;
@@ -10408,6 +10457,14 @@ virDomainNetDefFormat(virBufferPtr buf,
         virBufferAdjustIndent(buf, -6);
         break;
 
+    case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
+        virBufferEscapeString(buf, "      <source bridge='%s'/>\n",
+                              def->data.ovs.brname);
+        virBufferAdjustIndent(buf, 6);
+        if (virNetDevOpenvswitchPortFormat(def->data.ovs.interfaceId, buf) < 0)
+            return -1;
+        virBufferAdjustIndent(buf, -6);
+        break;
     case VIR_DOMAIN_NET_TYPE_USER:
     case VIR_DOMAIN_NET_TYPE_LAST:
         break;
@@ -13729,6 +13786,23 @@ virDomainNetGetActualBandwidth(virDomainNetDefPtr iface)
     return iface->bandwidth;
 }
 
+char *
+virDomainNetGetActualOpenvswitchBrname(virDomainNetDefPtr iface)
+{
+    if (iface->type == VIR_DOMAIN_NET_TYPE_OPENVSWITCH)
+        return iface->data.ovs.brname;
+    else
+        return NULL;
+}
+
+char *
+virDomainNetGetActualOpenvswitchInterfaceId(virDomainNetDefPtr iface)
+{
+    if (iface->type == VIR_DOMAIN_NET_TYPE_OPENVSWITCH)
+        return iface->data.ovs.interfaceId;
+    else
+        return NULL;
+}
 
 /* Return listens[ii] from the appropriate union for the graphics
  * type, or NULL if this is an unsuitable type, or the index is out of
@@ -13923,4 +13997,41 @@ virDomainNetFind(virDomainDefPtr def, const char *device)
     }
 
     return net;
+}
+
+char *
+virNetDevOpenvswitchPortParseInterfaceId(xmlNodePtr node)
+{
+    char *Interface_id = virXMLPropString(node, "interfaceid");
+
+    if (!Interface_id || strlen(Interface_id) == 0) {
+        // interfaceID does not have to be a UUID,
+        // but a UUID is a reasonable default
+        if (virAlloc(Interface_id, VIR_UUID_STRING_BUFLEN) < 0) {
+            virReportOOMError();
+            goto error;
+        }
+        if (virUUIDGenerate((unsigned char *) Interface_id)) {
+            virDomainReportError(VIR_ERR_XML_ERROR, "%s",
+                        _("cannot generate a random uuid for interfaceid"));
+            goto error;
+        }
+    }
+
+cleanup:
+    return Interface_id;
+
+error:
+    VIR_FREE(Interface_id);
+    goto cleanup;
+}
+
+
+int
+virNetDevOpenvswitchPortFormat(char * interfaceId, virBufferPtr buf)
+{
+    if (interfaceId)
+        virBufferAsprintf(buf, "<openvswitchport interfaceid='%s'/>\n",
+                                                    interfaceId);
+    return 0;
 }
