@@ -2832,6 +2832,8 @@ networkAllocateActualDevice(virDomainNetDefPtr iface)
         }
 
         /* Set type=direct and appropriate <source mode='xxx'/> */
+        VIR_DEBUG("%s: Assigning type as VIR_DOMAIN_NET_TYPE_DIRECT for network %s\n",
+            __FUNCTION__, iface->data.network.name);
         iface->data.network.actual->type = VIR_DOMAIN_NET_TYPE_DIRECT;
         switch (netdef->forwardType) {
         case VIR_NETWORK_FORWARD_BRIDGE:

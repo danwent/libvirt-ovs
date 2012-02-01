@@ -17,6 +17,7 @@
  *
  * Authors:
  *     Dan Wendlandt <dan@nicira.com>
+ *     Kyle Mestery <kmestery@cisco.com>
  */
 
 #include <config.h>
@@ -24,6 +25,7 @@
 #include "netdev_openvswitch_conf.h"
 #include "virterror_internal.h"
 #include "memory.h"
+#include "uuid.h"
 
 #define VIR_FROM_THIS VIR_FROM_NONE
 #define virNetDevError(code, ...)                                       \
@@ -34,6 +36,7 @@
 virNetDevOpenvswitchPortPtr
 virNetDevOpenvswitchPortParse(xmlNodePtr node)
 {
+    char *InterfaceID = NULL;
     virNetDevOpenvswitchPortPtr ovsPort = NULL;
     xmlNodePtr cur = node->children;
 
@@ -42,16 +45,29 @@ virNetDevOpenvswitchPortParse(xmlNodePtr node)
         return NULL;
     }
 
-    ovsPort->InterfaceID = virXMLPropString(node, "interfaceid");
+    while (cur != NULL) {
+        if (xmlStrEqual(cur->name, BAD_CAST "parameters")) {
+            InterfaceID = virXMLPropString(cur, "interfaceid");
 
-    if (!ovsPort->InterfaceID || strlen(ovsPort->InterfaceID) == 0) {
+            break;
+        }
+
+        cur = cur->next;
+    }
+
+    if (InterfaceID == NULL || (strlen(InterfaceID) == 0)) {
         // interfaceID does not have to be a UUID,
         // but a UUID is a reasonable default
-        virAlloc(ovsPort->InterfaceID, VIR_UUID_STRING_BUFLEN);
-        if (virUUIDGenerate(ovsPort->InterfaceID)) {
+        if (virUUIDGenerate((unsigned char *)ovsPort->InterfaceID)) {
                     virNetDevError(VIR_ERR_XML_ERROR, "%s",
                                          _("cannot generate a random uuid for interfaceid"));
                     goto error;
+        }
+    } else {
+        if (virStrcpyStatic(ovsPort->InterfaceID, InterfaceID) == NULL) {
+            virNetDevError(VIR_ERR_XML_ERROR, "%s",
+                           _("InterfaceID parameter too long"));
+            goto error;
         }
     }
 
@@ -68,8 +84,15 @@ int
 virNetDevOpenvswitchPortFormat(virNetDevOpenvswitchPortPtr ovsPort,
                             virBufferPtr buf)
 {
-    if (ovsPort)
-        virBufferAsprintf(buf, "<openvswitchport interfaceid='%s'/>\n",
-                                                    ovsPort->InterfaceID);
+    if (ovsPort == NULL)
+        return 0;
+    
+    virBufferAsprintf(buf, "<virtualport type='openvswitch'>\n");
+
+    virBufferAsprintf(buf,
+                           "  <parameters interfaceid='%s'/>\n",
+                                                   ovsPort->InterfaceID);
+    virBufferAddLit(buf, "</virtualport>\n");
+
     return 0;
 }

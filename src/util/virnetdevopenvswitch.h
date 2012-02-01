@@ -17,18 +17,30 @@
  *
  * Authors:
  *     Dan Wendlandt <dan@nicira..com>
+ *     Kyle Mestery <kmestery@cisco.com>
  */
 
 #ifndef __VIR_NETDEV_OPENVSWITCH_H__
 # define __VIR_NETDEV_OPENVSWITCH_H__
 
 # include "internal.h"
+# include "util.h"
+
+#define VIR_NETDEV_OVS_BRNAME_LEN       64
+#define VIR_NETDEV_OVS_INTERFACEID_LEN  64
+
+/* Type of bridge interface */
+enum virDomainNetBridgeType {
+    VIR_DOMAIN_NET_INTERFACE_BRIDGE_TYPE_LINUX       = 0,
+    VIR_DOMAIN_NET_INTERFACE_BRIDGE_TYPE_OPENVSWITCH,
+};
+typedef enum virDomainNetBridgeType virDomainNetBridgeType;
 
 typedef struct _virNetDevOpenvswitchPort virNetDevOpenvswitchPort;
 typedef virNetDevOpenvswitchPort *virNetDevOpenvswitchPortPtr;
 struct _virNetDevOpenvswitchPort {
-    char *brname;
-    char *InterfaceID;
+    char brname[VIR_NETDEV_OVS_BRNAME_LEN];
+    char InterfaceID[VIR_NETDEV_OVS_INTERFACEID_LEN];
 };
 
 int virNetDevOpenvswitchAddPort(const char *brname, const char *ifname,

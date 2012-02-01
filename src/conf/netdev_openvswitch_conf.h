@@ -17,6 +17,7 @@
  *
  * Authors:
  *     Dan Wendlandt <dan@nicira.com>
+ *     Kyle Mestery <kmestery@cisco.com>
  */
 
 #ifndef __VIR_NETDEV_OPENVSWITCH_CONF_H__

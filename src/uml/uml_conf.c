@@ -238,7 +238,6 @@ umlBuildCommandLineNet(virConnectPtr conn,
     }
 
     case VIR_DOMAIN_NET_TYPE_BRIDGE:
-    case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
         if (umlConnectTapDevice(conn, vm, def,
                                 def->data.bridge.brname) < 0)
             goto error;

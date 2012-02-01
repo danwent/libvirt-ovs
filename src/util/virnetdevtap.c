@@ -270,12 +270,7 @@ int virNetDevTapCreateInBridgePort(const char *brname,
                                    int *tapfd,
                                    virDomainNetDefPtr net)
 {
-    int actualType;
-
-    if (net)
-        actualType = virDomainNetGetActualType(net);
-    else
-        actualType = VIR_DOMAIN_NET_TYPE_BRIDGE;
+    virNetDevOpenvswitchPortPtr ovsPort = NULL;
 
     if (virNetDevTapCreate(ifname, vnet_hdr, tapfd) < 0)
         return -1;
@@ -296,9 +291,11 @@ int virNetDevTapCreateInBridgePort(const char *brname,
     if (virNetDevSetMTUFromDevice(*ifname, brname) < 0)
         goto error;
 
-    if (actualType == VIR_DOMAIN_NET_TYPE_OPENVSWITCH) {
-        virNetDevOpenvswitchPortPtr p = virDomainNetGetActualOpenvswitchPortPtr(net);
-        if (virNetDevOpenvswitchAddPort(brname, *ifname, macaddr, p) < 0)
+    if (net != NULL)
+        ovsPort = virDomainNetGetActualOpenvswitchPortPtr(net);
+
+    if (ovsPort != NULL) {
+        if (virNetDevOpenvswitchAddPort(brname, *ifname, macaddr, ovsPort) < 0)
             goto error;
     } else {
         if (virNetDevBridgeAddPort(brname, *ifname) < 0)

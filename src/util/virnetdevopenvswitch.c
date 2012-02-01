@@ -16,7 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  *
  * Authors:
- *     Dan Wendlandt <dan@nicira..com>
+ *     Dan Wendlandt <dan@nicira.com>
+ *     Kyle Mestery <kmestery@cisco.com>
  */
 
 #include <config.h>

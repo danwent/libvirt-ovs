@@ -221,13 +221,6 @@ qemuNetworkIfaceConnect(virDomainDefPtr def,
             virReportOOMError();
             return -1;
         }
-    } else if (actualType == VIR_DOMAIN_NET_TYPE_OPENVSWITCH) {
-        virNetDevOpenvswitchPortPtr p =
-               virDomainNetGetActualOpenvswitchPortPtr(net);
-        if (!(brname = strdup(p->brname))) {
-            virReportOOMError();
-            return -1;
-        }
     } else {
         qemuReportError(VIR_ERR_INTERNAL_ERROR,
                         _("Network type %d is not supported"),
@@ -2546,7 +2539,6 @@ qemuBuildHostNetStr(virDomainNetDefPtr net,
     switch (netType) {
     case VIR_DOMAIN_NET_TYPE_NETWORK:
     case VIR_DOMAIN_NET_TYPE_BRIDGE:
-    case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
     case VIR_DOMAIN_NET_TYPE_DIRECT:
         virBufferAddLit(&buf, "tap");
         virBufferAsprintf(&buf, "%cfd=%s", type_sep, tapfd);
@@ -2595,7 +2587,6 @@ qemuBuildHostNetStr(virDomainNetDefPtr net,
         case VIR_DOMAIN_NET_TYPE_ETHERNET:
         case VIR_DOMAIN_NET_TYPE_NETWORK:
         case VIR_DOMAIN_NET_TYPE_BRIDGE:
-        case VIR_DOMAIN_NET_TYPE_OPENVSWITCH:
         case VIR_DOMAIN_NET_TYPE_INTERNAL:
         case VIR_DOMAIN_NET_TYPE_DIRECT:
         case VIR_DOMAIN_NET_TYPE_LAST:

@@ -526,7 +526,6 @@ enum virDomainNetType {
     VIR_DOMAIN_NET_TYPE_BRIDGE,
     VIR_DOMAIN_NET_TYPE_INTERNAL,
     VIR_DOMAIN_NET_TYPE_DIRECT,
-    VIR_DOMAIN_NET_TYPE_OPENVSWITCH,
 
     VIR_DOMAIN_NET_TYPE_LAST,
 };
@@ -570,15 +569,14 @@ struct _virDomainActualNetDef {
     union {
         struct {
             char *brname;
+            virDomainNetBridgeType brtype;
+            virNetDevOpenvswitchPortPtr ovsPort;
         } bridge;
         struct {
             char *linkdev;
             int mode; /* enum virMacvtapMode from util/macvtap.h */
             virNetDevVPortProfilePtr virtPortProfile;
         } direct;
-        struct {
-            virNetDevOpenvswitchPortPtr ovsPort;
-        } ovs;
     } data;
     virNetDevBandwidthPtr bandwidth;
 };
@@ -624,6 +622,7 @@ struct _virDomainNetDef {
         struct {
             char *brname;
             char *ipaddr;
+            virNetDevOpenvswitchPortPtr ovsPort;
         } bridge;
         struct {
             char *name;
@@ -633,9 +632,6 @@ struct _virDomainNetDef {
             int mode; /* enum virMacvtapMode from util/macvtap.h */
             virNetDevVPortProfilePtr virtPortProfile;
         } direct;
-        struct {
-            virNetDevOpenvswitchPortPtr ovsPort;
-        } ovs;
     } data;
     struct {
         bool sndbuf_specified;

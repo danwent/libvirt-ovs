@@ -35,6 +35,7 @@
 #include "datatypes.h"
 #include "network_conf.h"
 #include "netdev_vport_profile_conf.h"
+#include "netdev_openvswitch_conf.h"
 #include "netdev_bandwidth_conf.h"
 #include "memory.h"
 #include "xml.h"
@@ -931,6 +932,7 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt)
     virNetworkDefPtr def;
     char *tmp;
     char *stp = NULL;
+    char *brtype = NULL;
     xmlNodePtr *ipNodes = NULL;
     xmlNodePtr *portGroupNodes = NULL;
     xmlNodePtr *forwardIfNodes = NULL;
@@ -983,6 +985,12 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt)
     /* Parse bridge information */
     def->bridge = virXPathString("string(./bridge[1]/@name)", ctxt);
     stp = virXPathString("string(./bridge[1]/@stp)", ctxt);
+    brtype = virXPathString("string(./bridge[1]/@type)", ctxt);
+    if (brtype && STREQ(brtype, "openvswitch")) {
+        def->brtype = VIR_DOMAIN_NET_INTERFACE_BRIDGE_TYPE_OPENVSWITCH;
+    } else {
+        def->brtype = VIR_DOMAIN_NET_INTERFACE_BRIDGE_TYPE_LINUX;
+    }
 
     if (virXPathULong("string(./bridge[1]/@delay)", ctxt, &def->delay) < 0)
         def->delay = 0;
@@ -1507,7 +1515,11 @@ char *virNetworkDefFormat(const virNetworkDefPtr def, unsigned int flags)
                           def->delay);
     } else if (def->forwardType == VIR_NETWORK_FORWARD_BRIDGE &&
                def->bridge) {
-       virBufferEscapeString(&buf, "  <bridge name='%s' />\n", def->bridge);
+        if (def->brtype == VIR_DOMAIN_NET_INTERFACE_BRIDGE_TYPE_OPENVSWITCH) {
+            virBufferEscapeString(&buf, "  <bridge name='%s type='openvswitch' />\n", def->bridge);
+        } else {
+            virBufferEscapeString(&buf, "  <bridge name='%s' />\n", def->bridge);
+        }
     }
 
 

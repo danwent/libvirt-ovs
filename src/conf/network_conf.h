@@ -35,6 +35,7 @@
 # include "virsocketaddr.h"
 # include "virnetdevbandwidth.h"
 # include "virnetdevvportprofile.h"
+# include "virnetdevopenvswitch.h"
 # include "util.h"
 
 enum virNetworkForwardType {
@@ -156,6 +157,7 @@ struct _virNetworkDef {
     unsigned int stp :1; /* Spanning tree protocol */
     unsigned char mac[VIR_MAC_BUFLEN]; /* mac address of bridge device */
     bool mac_specified;
+    virDomainNetBridgeType brtype;
 
     int forwardType;    /* One of virNetworkForwardType constants */
 
