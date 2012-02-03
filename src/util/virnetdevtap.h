@@ -24,6 +24,7 @@
 # define __VIR_NETDEV_TAP_H__
 
 # include "internal.h"
+# include "conf/domain_conf.h"
 
 int virNetDevTapCreate(char **ifname,
                        int vnet_hdr,
@@ -38,8 +39,13 @@ int virNetDevTapCreateInBridgePort(const char *brname,
                                    const unsigned char *macaddr,
                                    int vnet_hdr,
                                    bool up,
-                                   int *tapfd)
+                                   int *tapfd,
+                                   virNetDevOpenvswitchPortPtr ovsport)
     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) ATTRIBUTE_NONNULL(3)
     ATTRIBUTE_RETURN_CHECK;
+
+int virNetDevTapDeleteInBridgePort(char *ifname,
+                                   virNetDevOpenvswitchPortPtr ovsport)
+ATTRIBUTE_NONNULL(1) ATTRIBUTE_RETURN_CHECK;
 
 #endif /* __VIR_NETDEV_TAP_H__ */

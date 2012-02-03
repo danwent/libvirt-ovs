@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007, 2011 Red Hat, Inc.
+ * Copyright (C) 2012 Nicira, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,27 +16,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  *
  * Authors:
- *     Mark McLoughlin <markmc@redhat.com>
+ *     Dan Wendlandt <dan@nicira.com>
+ *     Kyle Mestery <kmestery@cisco.com>
+ *     Ansis Atteka <aatteka@nicira.com>
  */
 
-#ifndef __VIR_UUID_H__
-# define __VIR_UUID_H__
+#ifndef __VIR_NETDEV_OPENVSWITCH_CONF_H__
+# define __VIR_NETDEV_OPENVSWITCH_CONF_H__
 
 # include "internal.h"
+# include "virnetdevopenvswitch.h"
+# include "buf.h"
+# include "xml.h"
 
-int virSetHostUUIDStr(const char *host_uuid);
-int virGetHostUUID(unsigned char *host_uuid) ATTRIBUTE_NONNULL(1);
+virNetDevOpenvswitchPortPtr
+virNetDevOpenvswitchPortParse(xmlNodePtr node);
 
-int virUUIDIsValid(unsigned char *uuid);
+int
+virNetDevOpenvswitchPortFormat(virNetDevOpenvswitchPortPtr ovsPort,
+                               virBufferPtr buf);
 
-int virUUIDGenerate(unsigned char *uuid);
-int virUUIDGenerateStr(char *struuid);
-
-int virUUIDParse(const char *uuidstr,
-                 unsigned char *uuid)
-    ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) ATTRIBUTE_RETURN_CHECK;
-
-void virUUIDFormat(const unsigned char *uuid,
-                   char *uuidstr) ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2);
-
-#endif /* __VIR_UUID_H__ */
+#endif /* __VIR_NETDEV_OPENVSWITCH_CONF_H__ */

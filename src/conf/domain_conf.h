@@ -41,6 +41,7 @@
 # include "virnetdevmacvlan.h"
 # include "sysinfo.h"
 # include "virnetdevvportprofile.h"
+# include "virnetdevopenvswitch.h"
 # include "virnetdevbandwidth.h"
 
 /* Different types of hypervisor */
@@ -594,6 +595,7 @@ struct _virDomainActualNetDef {
     union {
         struct {
             char *brname;
+            virNetDevOpenvswitchPortPtr ovsPort;
         } bridge;
         struct {
             char *linkdev;
@@ -645,6 +647,7 @@ struct _virDomainNetDef {
         struct {
             char *brname;
             char *ipaddr;
+            virNetDevOpenvswitchPortPtr ovsPort;
         } bridge;
         struct {
             char *name;
@@ -1876,6 +1879,9 @@ virNetDevVPortProfilePtr
 virDomainNetGetActualDirectVirtPortProfile(virDomainNetDefPtr iface);
 virNetDevBandwidthPtr
 virDomainNetGetActualBandwidth(virDomainNetDefPtr iface);
+
+virNetDevOpenvswitchPortPtr
+virDomainNetGetActualOpenvswitchPortPtr(virDomainNetDefPtr iface);
 
 int virDomainControllerInsert(virDomainDefPtr def,
                               virDomainControllerDefPtr controller);

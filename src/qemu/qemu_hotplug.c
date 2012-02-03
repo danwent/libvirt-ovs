@@ -40,6 +40,7 @@
 #include "qemu_cgroup.h"
 #include "locking/domain_lock.h"
 #include "network/bridge_driver.h"
+#include "virnetdevtap.h"
 
 #define VIR_FROM_THIS VIR_FROM_QEMU
 
@@ -837,7 +838,8 @@ cleanup:
 
         if (iface_connected)
             virDomainConfNWFilterTeardown(net);
-
+        ignore_value(virNetDevTapDeleteInBridgePort(net->ifname,
+                       virDomainNetGetActualOpenvswitchPortPtr(net)));
         networkReleaseActualDevice(net);
     }
 
@@ -1937,7 +1939,8 @@ int qemuDomainDetachNetDevice(struct qemud_driver *driver,
                                  detach->ifname);
         }
     }
-
+    ignore_value(virNetDevTapDeleteInBridgePort(detach->ifname,
+                   virDomainNetGetActualOpenvswitchPortPtr(detach)));
     networkReleaseActualDevice(detach);
     if (vm->def->nnets > 1) {
         memmove(vm->def->nets + i,

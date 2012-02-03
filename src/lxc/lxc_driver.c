@@ -56,6 +56,7 @@
 #include "domain_nwfilter.h"
 #include "network/bridge_driver.h"
 #include "virnetdev.h"
+#include "virnetdevtap.h"
 #include "virnodesuspend.h"
 #include "virtime.h"
 #include "virtypedparam.h"
@@ -1132,10 +1133,12 @@ static void lxcVmCleanup(lxc_driver_t *driver,
     priv->monitorWatch = -1;
 
     for (i = 0 ; i < vm->def->nnets ; i++) {
-        ignore_value(virNetDevSetOnline(vm->def->nets[i]->ifname, false));
-        ignore_value(virNetDevVethDelete(vm->def->nets[i]->ifname));
-
-        networkReleaseActualDevice(vm->def->nets[i]);
+        virDomainNetDefPtr iface = vm->def->nets[i];
+        ignore_value(virNetDevSetOnline(iface->ifname, false));
+        ignore_value(virNetDevVethDelete(iface->ifname));
+        ignore_value(virNetDevTapDeleteInBridgePort(iface->ifname,
+                       virDomainNetGetActualOpenvswitchPortPtr(iface)));
+        networkReleaseActualDevice(iface);
     }
 
     virDomainConfVMNWFilterTeardown(vm);
@@ -1377,8 +1380,12 @@ static int lxcSetupInterfaces(virConnectPtr conn,
 
 cleanup:
     if (ret != 0) {
-        for (i = 0 ; i < def->nnets ; i++)
-            networkReleaseActualDevice(def->nets[i]);
+        for (i = 0 ; i < def->nnets ; i++) {
+            virDomainNetDefPtr iface = def->nets[i];
+            ignore_value(virNetDevTapDeleteInBridgePort(iface->ifname,
+                           virDomainNetGetActualOpenvswitchPortPtr(iface)));
+            networkReleaseActualDevice(iface);
+        }
     }
     return ret;
 }

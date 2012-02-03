@@ -62,6 +62,7 @@
 #include "network/bridge_driver.h"
 #include "uuid.h"
 #include "virtime.h"
+#include "virnetdevtap.h"
 
 #define VIR_FROM_THIS VIR_FROM_QEMU
 
@@ -3731,6 +3732,8 @@ void qemuProcessStop(struct qemud_driver *driver,
         /* release the physical device (or any other resources used by
          * this interface in the network driver
          */
+        ignore_value(virNetDevTapDeleteInBridgePort(net->ifname,
+                       virDomainNetGetActualOpenvswitchPortPtr(net)));
         networkReleaseActualDevice(net);
     }
 

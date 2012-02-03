@@ -379,6 +379,7 @@ virDomainNetGetActualBridgeName;
 virDomainNetGetActualDirectDev;
 virDomainNetGetActualDirectMode;
 virDomainNetGetActualDirectVirtPortProfile;
+virDomainNetGetActualOpenvswitchPortPtr;
 virDomainNetGetActualType;
 virDomainNetIndexByMac;
 virDomainNetInsert;
@@ -737,6 +738,10 @@ virShrinkN;
 # netdev_bandwidth_conf.h
 virNetDevBandwidthFormat;
 virNetDevBandwidthParse;
+
+# netdev_openvswitch_conf.h
+virNetDevOpenvswitchPortFormat;
+virNetDevOpenvswitchPortParse;
 
 
 # netdev_vportprofile_conf.h
@@ -1145,6 +1150,7 @@ virGetHostUUID;
 virSetHostUUIDStr;
 virUUIDFormat;
 virUUIDGenerate;
+virUUIDGenerateStr;
 virUUIDParse;
 
 
@@ -1237,10 +1243,16 @@ virNetDevMacVLanCreateWithVPortProfile;
 virNetDevMacVLanDeleteWithVPortProfile;
 
 
+# virnetdevopenvswitch.h
+virNetDevOpenvswitchAddPort;
+virNetDevOpenvswitchDelPort;
+
+
 # virnetdevtap.h
 virNetDevTapCreate;
 virNetDevTapCreateInBridgePort;
 virNetDevTapDelete;
+virNetDevTapDeleteInBridgePort;
 
 
 # virnetdevveth.h
