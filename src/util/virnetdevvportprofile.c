@@ -991,6 +991,9 @@ virNetDevVPortProfileAssociate(const char *macvtap_ifname,
         }
 
         break;
+    case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
+        //FIXME: Not yet implemented
+        break;
     }
 
     return rc;
@@ -1044,6 +1047,9 @@ virNetDevVPortProfileDisassociate(const char *macvtap_ifname,
         rc = virNetDevVPortProfileOp8021Qbh(linkdev, macvtap_macaddr,
                                             virtPort, NULL,
                                             VIR_NETDEV_VPORT_PROFILE_LINK_OP_DISASSOCIATE);
+        break;
+    case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
+        //FIXME: Not yet implemented
         break;
     }
 

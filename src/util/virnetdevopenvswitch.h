@@ -26,17 +26,13 @@
 
 # include "internal.h"
 # include "util.h"
+# include "virnetdevvportprofile.h"
 
-typedef struct _virNetDevOpenvswitchPort virNetDevOpenvswitchPort;
-typedef virNetDevOpenvswitchPort *virNetDevOpenvswitchPortPtr;
-struct _virNetDevOpenvswitchPort {
-    char InterfaceID[VIR_UUID_STRING_BUFLEN];
-};
 
 int virNetDevOpenvswitchAddPort(const char *brname,
                                 const char *ifname,
                                 const unsigned char *macaddr,
-                                virNetDevOpenvswitchPortPtr ovsport)
+                                virNetDevVPortProfilePtr ovsport)
     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) ATTRIBUTE_NONNULL(3)
     ATTRIBUTE_RETURN_CHECK;
 

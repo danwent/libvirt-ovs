@@ -44,21 +44,23 @@
  */
 int virNetDevOpenvswitchAddPort(const char *brname, const char *ifname,
                                    const unsigned char *macaddr,
-                                   virNetDevOpenvswitchPortPtr ovsport)
+                                   virNetDevVPortProfilePtr ovsport)
 {
     int ret = -1;
     virCommandPtr cmd = NULL;
     char macaddrstr[VIR_MAC_STRING_BUFLEN];
+    char uuidstr[VIR_UUID_STRING_BUFLEN];
     char *attachedmac_ex_id = NULL;
     char *ifaceid_ex_id = NULL;
 
     virMacAddrFormat(macaddr, macaddrstr);
+    virUUIDFormat(ovsport->u.openvswitch.interfaceID, uuidstr);
 
     if (virAsprintf(&attachedmac_ex_id, "external-ids:attached-mac=\"%s\"",
                     macaddrstr) < 0)
         goto cleanup;
     if (virAsprintf(&ifaceid_ex_id, "external-ids:iface-id=\"%s\"",
-                    ovsport->InterfaceID) < 0)
+                    uuidstr) < 0)
         goto cleanup;
 
     cmd = virCommandNew(OVSVSCTL);

@@ -739,10 +739,6 @@ virShrinkN;
 virNetDevBandwidthFormat;
 virNetDevBandwidthParse;
 
-# netdev_openvswitch_conf.h
-virNetDevOpenvswitchPortFormat;
-virNetDevOpenvswitchPortParse;
-
 
 # netdev_vportprofile_conf.h
 virNetDevVPortProfileFormat;

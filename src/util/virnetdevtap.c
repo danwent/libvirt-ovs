@@ -268,7 +268,7 @@ int virNetDevTapCreateInBridgePort(const char *brname,
                                    int vnet_hdr,
                                    bool up,
                                    int *tapfd,
-                                   virNetDevOpenvswitchPortPtr ovsport)
+                                   virNetDevVPortProfilePtr ovsport)
 {
     if (virNetDevTapCreate(ifname, vnet_hdr, tapfd) < 0)
         return -1;
@@ -318,7 +318,7 @@ int virNetDevTapCreateInBridgePort(const char *brname,
  * Returns 0 in case of success or -1 on failure
  */
 int virNetDevTapDeleteInBridgePort(char *ifname,
-                                   virNetDevOpenvswitchPortPtr ovsport)
+                                   virNetDevVPortProfilePtr ovsport)
 {
     int ret = 0;
     if (ovsport)

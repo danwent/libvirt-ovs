@@ -35,7 +35,8 @@
 VIR_ENUM_IMPL(virNetDevVPort, VIR_NETDEV_VPORT_PROFILE_LAST,
               "none",
               "802.1Qbg",
-              "802.1Qbh")
+              "802.1Qbh",
+              "openvswitch")
 
 
 virNetDevVPortProfilePtr
@@ -47,6 +48,7 @@ virNetDevVPortProfileParse(xmlNodePtr node)
     char *virtPortTypeIDVersion = NULL;
     char *virtPortInstanceID = NULL;
     char *virtPortProfileID = NULL;
+    char *virtPortInterfaceID = NULL;
     virNetDevVPortProfilePtr virtPort = NULL;
     xmlNodePtr cur = node->children;
 
@@ -76,7 +78,7 @@ virNetDevVPortProfileParse(xmlNodePtr node)
             virtPortTypeIDVersion = virXMLPropString(cur, "typeidversion");
             virtPortInstanceID = virXMLPropString(cur, "instanceid");
             virtPortProfileID = virXMLPropString(cur, "profileid");
-
+            virtPortInterfaceID = virXMLPropString(cur, "interfaceid");
             break;
         }
 
@@ -171,6 +173,65 @@ virNetDevVPortProfileParse(xmlNodePtr node)
             goto error;
         }
         break;
+    case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
+        if (virtPortInterfaceID != NULL) {
+            if (virUUIDParse(virtPortInterfaceID,
+                             virtPort->u.openvswitch.interfaceID)) {
+                virNetDevError(VIR_ERR_XML_ERROR, "%s",
+                                     _("cannot parse interfaceid parameter as a uuid"));
+                goto error;
+            }
+        } else {
+            if (virUUIDGenerate(virtPort->u.openvswitch.interfaceID)) {
+                virNetDevError(VIR_ERR_XML_ERROR, "%s",
+                                     _("cannot generate a random uuid for interfaceid"));
+                goto error;
+            }
+        }
+        break;
+
+/*
+ *     char *InterfaceID = NULL;
+    virNetDevOpenvswitchPortPtr ovsPort = NULL;
+    xmlNodePtr cur = node->children;
+
+    if (VIR_ALLOC(ovsPort) < 0) {
+        virReportOOMError();
+        goto error;
+    }
+
+    while (cur != NULL) {
+        if (xmlStrEqual(cur->name, BAD_CAST "parameters")) {
+            InterfaceID = virXMLPropString(cur, "interfaceid");
+            break;
+        }
+        cur = cur->next;
+    }
+
+    if (InterfaceID == NULL || (strlen(InterfaceID) == 0)) {
+        // interfaceID does not have to be a UUID,
+        // but a UUID is a reasonable default
+        if (virUUIDGenerateStr(ovsPort->InterfaceID)) {
+            virNetDevError(VIR_ERR_XML_ERROR, "%s",
+                        _("cannot generate a random uuid for interfaceid"));
+            goto error;
+        }
+    } else {
+        if (virStrcpyStatic(ovsPort->InterfaceID, InterfaceID) == NULL) {
+            virNetDevError(VIR_ERR_XML_ERROR, "%s",
+                           _("InterfaceID parameter too long"));
+            goto error;
+        }
+    }
+
+cleanup:
+    return ovsPort;
+
+error:
+    VIR_FREE(ovsPort);
+    goto cleanup;
+ */
+        break;
 
     default:
         virNetDevError(VIR_ERR_XML_ERROR,
@@ -223,6 +284,13 @@ virNetDevVPortProfileFormat(virNetDevVPortProfilePtr virtPort,
         virBufferAsprintf(buf,
                           "  <parameters profileid='%s'/>\n",
                           virtPort->u.virtPort8021Qbh.profileID);
+        break;
+
+    case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
+        virUUIDFormat(virtPort->u.openvswitch.interfaceID,
+                      uuidstr);
+        virBufferAsprintf(buf, "  <parameters interfaceid='%s'/>\n",
+                          uuidstr);
         break;
 
     default:

@@ -595,7 +595,7 @@ struct _virDomainActualNetDef {
     union {
         struct {
             char *brname;
-            virNetDevOpenvswitchPortPtr ovsPort;
+            virNetDevVPortProfilePtr ovsPort;
         } bridge;
         struct {
             char *linkdev;
@@ -647,7 +647,7 @@ struct _virDomainNetDef {
         struct {
             char *brname;
             char *ipaddr;
-            virNetDevOpenvswitchPortPtr ovsPort;
+            virNetDevVPortProfilePtr ovsPort;
         } bridge;
         struct {
             char *name;
@@ -1880,7 +1880,7 @@ virDomainNetGetActualDirectVirtPortProfile(virDomainNetDefPtr iface);
 virNetDevBandwidthPtr
 virDomainNetGetActualBandwidth(virDomainNetDefPtr iface);
 
-virNetDevOpenvswitchPortPtr
+virNetDevVPortProfilePtr
 virDomainNetGetActualOpenvswitchPortPtr(virDomainNetDefPtr iface);
 
 int virDomainControllerInsert(virDomainDefPtr def,

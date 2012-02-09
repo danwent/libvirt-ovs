@@ -51,7 +51,6 @@
 #include "count-one-bits.h"
 #include "secret_conf.h"
 #include "netdev_vport_profile_conf.h"
-#include "netdev_openvswitch_conf.h"
 #include "netdev_bandwidth_conf.h"
 
 #define VIR_FROM_THIS VIR_FROM_DOMAIN
@@ -3738,14 +3737,10 @@ virDomainActualNetDefParseXML(xmlNodePtr node,
 
     if (actual->type == VIR_DOMAIN_NET_TYPE_BRIDGE) {
         xmlNodePtr virtPortNode = virXPathNode("./virtualport", ctxt);
-        actual->data.bridge.brname = virXPathString("string(./source[1]/@bridge)", ctxt);
-        if (virtPortNode && virXMLPropString(virtPortNode, "type") &&
-                STREQ(virXMLPropString(virtPortNode, "type"), "openvswitch")) {
-            if (!(actual->data.bridge.ovsPort =
-                  virNetDevOpenvswitchPortParse(virtPortNode))) {
-                goto error;
-            }
-        }
+        if (virtPortNode &&
+            (!(actual->data.bridge.ovsPort =
+               virNetDevVPortProfileParse(virtPortNode))))
+            goto error;
     } else if (actual->type == VIR_DOMAIN_NET_TYPE_DIRECT) {
         xmlNodePtr virtPortNode;
 
@@ -3825,7 +3820,6 @@ virDomainNetDefParseXML(virCapsPtr caps,
     char *linkstate = NULL;
     virNWFilterHashTablePtr filterparams = NULL;
     virNetDevVPortProfilePtr virtPort = NULL;
-    virNetDevOpenvswitchPortPtr ovsPort = NULL;
     virDomainActualNetDefPtr actual = NULL;
     xmlNodePtr oldnode = ctxt->node;
     int ret;
@@ -3875,16 +3869,10 @@ virDomainNetDefParseXML(virCapsPtr caps,
                 mode = virXMLPropString(cur, "mode");
             } else if ((virtPort == NULL) &&
                        ((def->type == VIR_DOMAIN_NET_TYPE_DIRECT) ||
-                        (def->type == VIR_DOMAIN_NET_TYPE_NETWORK)) &&
+                        (def->type == VIR_DOMAIN_NET_TYPE_NETWORK) ||
+                        (def->type == VIR_DOMAIN_NET_TYPE_BRIDGE)) &&
                        xmlStrEqual(cur->name, BAD_CAST "virtualport")) {
                 if (!(virtPort = virNetDevVPortProfileParse(cur)))
-                    goto error;
-            } else if ((ovsPort == NULL) &&
-                       ((def->type == VIR_DOMAIN_NET_TYPE_BRIDGE) &&
-                       xmlStrEqual(cur->name, BAD_CAST "virtualport") &&
-                       virXMLPropString(cur, "type") &&
-                       STREQ(virXMLPropString(cur, "type"), "openvswitch"))) {
-                if (!(ovsPort = virNetDevOpenvswitchPortParse(cur)))
                     goto error;
             } else if ((network == NULL) &&
                        ((def->type == VIR_DOMAIN_NET_TYPE_SERVER) ||
@@ -4021,8 +4009,8 @@ virDomainNetDefParseXML(virCapsPtr caps,
             def->data.bridge.ipaddr = address;
             address = NULL;
         }
-        def->data.bridge.ovsPort = ovsPort;
-        ovsPort = NULL;
+        def->data.bridge.ovsPort = virtPort;
+        virtPort = NULL;
         break;
 
     case VIR_DOMAIN_NET_TYPE_CLIENT:
@@ -10447,7 +10435,7 @@ virDomainActualNetDefFormat(virBufferPtr buf,
                               def->data.bridge.brname);
         if (def->data.bridge.ovsPort) {
             virBufferAdjustIndent(buf, 6);
-            if (virNetDevOpenvswitchPortFormat(def->data.bridge.ovsPort, buf) < 0)
+            if (virNetDevVPortProfileFormat(def->data.bridge.ovsPort, buf) < 0)
                 return -1;
             virBufferAdjustIndent(buf, -6);
         }
@@ -10540,7 +10528,7 @@ virDomainNetDefFormat(virBufferPtr buf,
                               def->data.bridge.ipaddr);
         if (def->data.bridge.ovsPort) {
             virBufferAdjustIndent(buf, 6);
-            if (virNetDevOpenvswitchPortFormat(def->data.bridge.ovsPort, buf) < 0)
+            if (virNetDevVPortProfileFormat(def->data.bridge.ovsPort, buf) < 0)
                 return -1;
             virBufferAdjustIndent(buf, -6);
         }
@@ -13881,13 +13869,13 @@ virDomainNetGetActualBandwidth(virDomainNetDefPtr iface)
     return iface->bandwidth;
 }
 
-virNetDevOpenvswitchPortPtr
+virNetDevVPortProfilePtr
 virDomainNetGetActualOpenvswitchPortPtr(virDomainNetDefPtr iface)
 {
-    if (iface->type != VIR_DOMAIN_NET_TYPE_BRIDGE)
-        return NULL;
-    if (iface->data.bridge.ovsPort)
+    if (iface->type == VIR_DOMAIN_NET_TYPE_BRIDGE)
         return iface->data.bridge.ovsPort;
+    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK)
+        return NULL;
     if (!iface->data.network.actual)
         return NULL;
     return iface->data.network.actual->data.bridge.ovsPort;
