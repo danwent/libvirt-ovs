@@ -188,49 +188,17 @@ virNetDevVPortProfileParse(xmlNodePtr node)
                 goto error;
             }
         }
-        break;
-
-/*
- *     char *InterfaceID = NULL;
-    virNetDevOpenvswitchPortPtr ovsPort = NULL;
-    xmlNodePtr cur = node->children;
-
-    if (VIR_ALLOC(ovsPort) < 0) {
-        virReportOOMError();
-        goto error;
-    }
-
-    while (cur != NULL) {
-        if (xmlStrEqual(cur->name, BAD_CAST "parameters")) {
-            InterfaceID = virXMLPropString(cur, "interfaceid");
-            break;
+        /* profileid is not mandatory for Open vSwitch */
+        if (virtPortProfileID != NULL) {
+            if (virStrcpyStatic(virtPort->u.openvswitch.profileID,
+                                virtPortProfileID) == NULL) {
+                virNetDevError(VIR_ERR_XML_ERROR, "%s",
+                                     _("profileid parameter too long"));
+                goto error;
+            }
+        } else {
+            virtPort->u.openvswitch.profileID[0] = '\0';
         }
-        cur = cur->next;
-    }
-
-    if (InterfaceID == NULL || (strlen(InterfaceID) == 0)) {
-        // interfaceID does not have to be a UUID,
-        // but a UUID is a reasonable default
-        if (virUUIDGenerateStr(ovsPort->InterfaceID)) {
-            virNetDevError(VIR_ERR_XML_ERROR, "%s",
-                        _("cannot generate a random uuid for interfaceid"));
-            goto error;
-        }
-    } else {
-        if (virStrcpyStatic(ovsPort->InterfaceID, InterfaceID) == NULL) {
-            virNetDevError(VIR_ERR_XML_ERROR, "%s",
-                           _("InterfaceID parameter too long"));
-            goto error;
-        }
-    }
-
-cleanup:
-    return ovsPort;
-
-error:
-    VIR_FREE(ovsPort);
-    goto cleanup;
- */
         break;
 
     default:
@@ -289,8 +257,15 @@ virNetDevVPortProfileFormat(virNetDevVPortProfilePtr virtPort,
     case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
         virUUIDFormat(virtPort->u.openvswitch.interfaceID,
                       uuidstr);
-        virBufferAsprintf(buf, "  <parameters interfaceid='%s'/>\n",
-                          uuidstr);
+        if (virtPort->u.openvswitch.profileID[0] == '\0') {
+            virBufferAsprintf(buf, "  <parameters interfaceid='%s'/>\n",
+                              uuidstr);
+        } else {
+            virBufferAsprintf(buf, "  <parameters interfaceid='%s' "
+                              "profileid='%s'/>\n", uuidstr,
+                              virtPort->u.openvswitch.profileID);
+        }
+
         break;
 
     default:

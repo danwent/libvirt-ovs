@@ -72,6 +72,7 @@ struct _virNetDevVPortProfile {
         } virtPort8021Qbh;
         struct {
             unsigned char interfaceID[VIR_UUID_BUFLEN];
+            char          profileID[LIBVIRT_IFLA_VF_PORT_PROFILE_MAX];
         } openvswitch;
     } u;
 };

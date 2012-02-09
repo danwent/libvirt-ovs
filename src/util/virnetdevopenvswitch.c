@@ -52,6 +52,7 @@ int virNetDevOpenvswitchAddPort(const char *brname, const char *ifname,
     char uuidstr[VIR_UUID_STRING_BUFLEN];
     char *attachedmac_ex_id = NULL;
     char *ifaceid_ex_id = NULL;
+    char *profile_ex_id = NULL;
 
     virMacAddrFormat(macaddr, macaddrstr);
     virUUIDFormat(ovsport->u.openvswitch.interfaceID, uuidstr);
@@ -62,15 +63,31 @@ int virNetDevOpenvswitchAddPort(const char *brname, const char *ifname,
     if (virAsprintf(&ifaceid_ex_id, "external-ids:iface-id=\"%s\"",
                     uuidstr) < 0)
         goto cleanup;
+    if (ovsport->u.openvswitch.profileID[0] != '\0') {
+        if (virAsprintf(&profile_ex_id, "external-ids:port-profile=\"%s\"",
+                        ovsport->u.openvswitch.profileID) < 0)
+            goto cleanup;
+    }
 
     cmd = virCommandNew(OVSVSCTL);
-    virCommandAddArgList(cmd, "--", "--may-exist", "add-port",
+    if (ovsport->u.openvswitch.profileID[0] == '\0') {
+        virCommandAddArgList(cmd, "--", "--may-exist", "add-port",
                         brname, ifname,
                         "--", "set", "Interface", ifname, attachedmac_ex_id,
                         "--", "set", "Interface", ifname, ifaceid_ex_id,
                         "--", "set", "Interface", ifname,
                         "external-ids:iface-status=active",
                         NULL);
+    } else {
+        virCommandAddArgList(cmd, "--", "--may-exist", "add-port",
+                        brname, ifname,
+                        "--", "set", "Interface", ifname, attachedmac_ex_id,
+                        "--", "set", "Interface", ifname, ifaceid_ex_id,
+                        "--", "set", "Interface", ifname, profile_ex_id,
+                        "--", "set", "Interface", ifname,
+                        "external-ids:iface-status=active",
+                        NULL);
+    }
 
     if (virCommandRun(cmd, NULL) < 0) {
         virReportSystemError(VIR_ERR_INTERNAL_ERROR,
