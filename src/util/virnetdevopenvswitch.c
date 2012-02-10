@@ -100,6 +100,7 @@ int virNetDevOpenvswitchAddPort(const char *brname, const char *ifname,
     cleanup:
         VIR_FREE(attachedmac_ex_id);
         VIR_FREE(ifaceid_ex_id);
+        VIR_FREE(profile_ex_id);
         virCommandFree(cmd);
         return ret;
 }
