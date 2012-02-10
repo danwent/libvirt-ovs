@@ -1134,10 +1134,11 @@ static void lxcVmCleanup(lxc_driver_t *driver,
 
     for (i = 0 ; i < vm->def->nnets ; i++) {
         virDomainNetDefPtr iface = vm->def->nets[i];
+        virNetDevVPortProfilePtr vport = virDomainNetGetActualVirtPortProfile(iface);
         ignore_value(virNetDevSetOnline(iface->ifname, false));
+        if (vport && vport->virtPortType == VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH)
+            ignore_value(virNetDevOpenvswitchRemovePort(iface->ifname));
         ignore_value(virNetDevVethDelete(iface->ifname));
-        ignore_value(virNetDevTapDeleteInBridgePort(iface->ifname,
-                       virDomainNetGetActualOpenvswitchPortPtr(iface)));
         networkReleaseActualDevice(iface);
     }
 
@@ -1168,6 +1169,7 @@ static int lxcSetupInterfaceBridged(virConnectPtr conn,
     int ret = -1;
     char *parentVeth;
     char *containerVeth = NULL;
+    const virNetDevVPortProfilePtr vport = virDomainNetGetActualVirtPortProfile(net);
 
     VIR_DEBUG("calling vethCreate()");
     parentVeth = net->ifname;
@@ -1189,7 +1191,11 @@ static int lxcSetupInterfaceBridged(virConnectPtr conn,
     if (virNetDevSetMAC(containerVeth, net->mac) < 0)
         goto cleanup;
 
-    if (virNetDevBridgeAddPort(brname, parentVeth) < 0)
+    if (vport && vport->virtPortType == VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH)
+        ret = virNetDevOpenvswitchAddPort(brname, parentVeth, net->mac, vport);
+    else
+        ret = virNetDevBridgeAddPort(brname, parentVeth);
+    if (ret < 0)
         goto cleanup;
 
     if (virNetDevSetOnline(parentVeth, true) < 0)
@@ -1245,7 +1251,7 @@ static int lxcSetupInterfaceDirect(virConnectPtr conn,
      * and automagically dies when the container dies. So
      * we have no dev to perform disassociation with.
      */
-    prof = virDomainNetGetActualDirectVirtPortProfile(net);
+    prof = virDomainNetGetActualVirtPortProfile(net);
     if (prof) {
         lxcError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
                  _("Unable to set port profile on direct interfaces"));
@@ -1263,7 +1269,7 @@ static int lxcSetupInterfaceDirect(virConnectPtr conn,
             virDomainNetGetActualDirectDev(net),
             virDomainNetGetActualDirectMode(net),
             false, false, def->uuid,
-            virDomainNetGetActualDirectVirtPortProfile(net),
+            virDomainNetGetActualVirtPortProfile(net),
             &res_ifname,
             VIR_NETDEV_VPORT_PROFILE_OP_CREATE,
             driver->stateDir,
@@ -1382,8 +1388,9 @@ cleanup:
     if (ret != 0) {
         for (i = 0 ; i < def->nnets ; i++) {
             virDomainNetDefPtr iface = def->nets[i];
-            ignore_value(virNetDevTapDeleteInBridgePort(iface->ifname,
-                           virDomainNetGetActualOpenvswitchPortPtr(iface)));
+            virNetDevVPortProfilePtr vport = virDomainNetGetActualVirtPortProfile(iface);
+            if (vport && vport->virtPortType == VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH)
+                ignore_value(virNetDevOpenvswitchRemovePort(iface->ifname));
             networkReleaseActualDevice(iface);
         }
     }

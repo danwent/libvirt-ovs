@@ -36,7 +36,7 @@ int virNetDevOpenvswitchAddPort(const char *brname,
     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) ATTRIBUTE_NONNULL(3)
     ATTRIBUTE_RETURN_CHECK;
 
-int virNetDevOpenvswitchDelPort(const char *ifname)
+int virNetDevOpenvswitchRemovePort(const char *ifname)
     ATTRIBUTE_NONNULL(1) ATTRIBUTE_RETURN_CHECK;
 
 #endif /* __VIR_NETDEV_OPENVSWITCH_H__ */

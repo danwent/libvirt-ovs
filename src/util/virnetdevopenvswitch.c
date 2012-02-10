@@ -105,14 +105,14 @@ int virNetDevOpenvswitchAddPort(const char *brname, const char *ifname,
 }
 
 /**
- * virNetDevOpenvswitchDelPort:
+ * virNetDevOpenvswitchRemovePort:
  * @ifname: the network interface name
  *
  * Deletes an interface from a OVS bridge
  *
  * Returns 0 in case of success or -1 in case of failure.
  */
-int virNetDevOpenvswitchDelPort(const char *ifname)
+int virNetDevOpenvswitchRemovePort(const char *ifname)
 {
     int ret = -1;
     virCommandPtr cmd = NULL;

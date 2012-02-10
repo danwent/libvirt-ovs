@@ -13848,15 +13848,27 @@ virDomainNetGetActualDirectMode(virDomainNetDefPtr iface)
 }
 
 virNetDevVPortProfilePtr
-virDomainNetGetActualDirectVirtPortProfile(virDomainNetDefPtr iface)
+virDomainNetGetActualVirtPortProfile(virDomainNetDefPtr iface)
 {
-    if (iface->type == VIR_DOMAIN_NET_TYPE_DIRECT)
+    switch (iface->type) {
+    case VIR_DOMAIN_NET_TYPE_DIRECT:
         return iface->data.direct.virtPortProfile;
-    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK)
+    case VIR_DOMAIN_NET_TYPE_BRIDGE:
+        return iface->data.bridge.ovsPort;
+    case VIR_DOMAIN_NET_TYPE_NETWORK:
+        if (!iface->data.network.actual)
+            return NULL;
+        switch (iface->data.network.actual->type) {
+        case VIR_DOMAIN_NET_TYPE_DIRECT:
+            return iface->data.network.actual->data.direct.virtPortProfile;
+        case VIR_DOMAIN_NET_TYPE_BRIDGE:
+            return iface->data.network.actual->data.bridge.ovsPort;
+        default:
+            return NULL;
+        }
+    default:
         return NULL;
-    if (!iface->data.network.actual)
-        return NULL;
-    return iface->data.network.actual->data.direct.virtPortProfile;
+    }
 }
 
 virNetDevBandwidthPtr
@@ -13868,19 +13880,6 @@ virDomainNetGetActualBandwidth(virDomainNetDefPtr iface)
     }
     return iface->bandwidth;
 }
-
-virNetDevVPortProfilePtr
-virDomainNetGetActualOpenvswitchPortPtr(virDomainNetDefPtr iface)
-{
-    if (iface->type == VIR_DOMAIN_NET_TYPE_BRIDGE)
-        return iface->data.bridge.ovsPort;
-    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK)
-        return NULL;
-    if (!iface->data.network.actual)
-        return NULL;
-    return iface->data.network.actual->data.bridge.ovsPort;
-}
-
 
 /* Return listens[ii] from the appropriate union for the graphics
  * type, or NULL if this is an unsuitable type, or the index is out of

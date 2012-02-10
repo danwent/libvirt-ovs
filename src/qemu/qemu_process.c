@@ -3725,7 +3725,7 @@ void qemuProcessStop(struct qemud_driver *driver,
                              net->ifname, net->mac,
                              virDomainNetGetActualDirectDev(net),
                              virDomainNetGetActualDirectMode(net),
-                             virDomainNetGetActualDirectVirtPortProfile(net),
+                             virDomainNetGetActualVirtPortProfile(net),
                              driver->stateDir));
             VIR_FREE(net->ifname);
         }
@@ -3733,7 +3733,7 @@ void qemuProcessStop(struct qemud_driver *driver,
          * this interface in the network driver
          */
         ignore_value(virNetDevTapDeleteInBridgePort(net->ifname,
-                       virDomainNetGetActualOpenvswitchPortPtr(net)));
+                       virDomainNetGetActualVirtPortProfile(net)));
         networkReleaseActualDevice(net);
     }
 

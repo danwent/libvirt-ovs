@@ -1876,12 +1876,9 @@ const char *virDomainNetGetActualBridgeName(virDomainNetDefPtr iface);
 const char *virDomainNetGetActualDirectDev(virDomainNetDefPtr iface);
 int virDomainNetGetActualDirectMode(virDomainNetDefPtr iface);
 virNetDevVPortProfilePtr
-virDomainNetGetActualDirectVirtPortProfile(virDomainNetDefPtr iface);
+virDomainNetGetActualVirtPortProfile(virDomainNetDefPtr iface);
 virNetDevBandwidthPtr
 virDomainNetGetActualBandwidth(virDomainNetDefPtr iface);
-
-virNetDevVPortProfilePtr
-virDomainNetGetActualOpenvswitchPortPtr(virDomainNetDefPtr iface);
 
 int virDomainControllerInsert(virDomainDefPtr def,
                               virDomainControllerDefPtr controller);

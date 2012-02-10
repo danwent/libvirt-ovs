@@ -839,7 +839,7 @@ cleanup:
         if (iface_connected)
             virDomainConfNWFilterTeardown(net);
         ignore_value(virNetDevTapDeleteInBridgePort(net->ifname,
-                       virDomainNetGetActualOpenvswitchPortPtr(net)));
+                       virDomainNetGetActualVirtPortProfile(net)));
         networkReleaseActualDevice(net);
     }
 
@@ -1925,7 +1925,7 @@ int qemuDomainDetachNetDevice(struct qemud_driver *driver,
                          detach->ifname, detach->mac,
                          virDomainNetGetActualDirectDev(detach),
                          virDomainNetGetActualDirectMode(detach),
-                         virDomainNetGetActualDirectVirtPortProfile(detach),
+                         virDomainNetGetActualVirtPortProfile(detach),
                          driver->stateDir));
         VIR_FREE(detach->ifname);
     }
@@ -1940,7 +1940,7 @@ int qemuDomainDetachNetDevice(struct qemud_driver *driver,
         }
     }
     ignore_value(virNetDevTapDeleteInBridgePort(detach->ifname,
-                   virDomainNetGetActualOpenvswitchPortPtr(detach)));
+                   virDomainNetGetActualVirtPortProfile(detach)));
     networkReleaseActualDevice(detach);
     if (vm->def->nnets > 1) {
         memmove(vm->def->nets + i,

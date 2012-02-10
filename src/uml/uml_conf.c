@@ -143,7 +143,7 @@ umlConnectTapDevice(virConnectPtr conn,
     tapmac[0] = 0xFE; /* Discourage bridge from using TAP dev MAC */
     if (virNetDevTapCreateInBridgePort(bridge, &net->ifname, tapmac,
                        0, true, NULL,
-                       virDomainNetGetActualOpenvswitchPortPtr(net)) < 0) {
+                       virDomainNetGetActualVirtPortProfile(net)) < 0) {
         if (template_ifname)
             VIR_FREE(net->ifname);
         goto error;

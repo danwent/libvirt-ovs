@@ -154,7 +154,7 @@ qemuPhysIfaceConnect(virDomainDefPtr def,
         virDomainNetGetActualDirectDev(net),
         virDomainNetGetActualDirectMode(net),
         true, vnet_hdr, def->uuid,
-        virDomainNetGetActualDirectVirtPortProfile(net),
+        virDomainNetGetActualVirtPortProfile(net),
         &res_ifname,
         vmop, driver->stateDir,
         virDomainNetGetActualBandwidth(net));
@@ -248,7 +248,7 @@ qemuNetworkIfaceConnect(virDomainDefPtr def,
     tapmac[0] = 0xFE; /* Discourage bridge from using TAP dev MAC */
     err = virNetDevTapCreateInBridgePort(brname, &net->ifname, tapmac,
                              vnet_hdr, true, &tapfd,
-                             virDomainNetGetActualOpenvswitchPortPtr(net));
+                             virDomainNetGetActualVirtPortProfile(net));
     virDomainAuditNetDevice(def, net, "/dev/net/tun", tapfd >= 0);
     if (err < 0) {
         if (template_ifname)

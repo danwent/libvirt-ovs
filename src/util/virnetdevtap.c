@@ -322,6 +322,6 @@ int virNetDevTapDeleteInBridgePort(char *ifname,
 {
     int ret = 0;
     if (ovsport)
-        ret = virNetDevOpenvswitchDelPort(ifname);
+        ret = virNetDevOpenvswitchRemovePort(ifname);
     return ret;
 }
