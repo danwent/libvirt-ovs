@@ -24,7 +24,7 @@
 # define __VIR_NETDEV_TAP_H__
 
 # include "internal.h"
-# include "conf/domain_conf.h"
+# include "virnetdevvportprofile.h"
 
 int virNetDevTapCreate(char **ifname,
                        int vnet_hdr,
