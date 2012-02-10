@@ -55,7 +55,7 @@ enum virNetDevVPortProfileOp {
 };
 VIR_ENUM_DECL(virNetDevVPortProfileOp)
 
-/* profile data for macvtap (VEPA) */
+/* profile data for macvtap (VEPA) and openvswitch */
 typedef struct _virNetDevVPortProfile virNetDevVPortProfile;
 typedef virNetDevVPortProfile *virNetDevVPortProfilePtr;
 struct _virNetDevVPortProfile {

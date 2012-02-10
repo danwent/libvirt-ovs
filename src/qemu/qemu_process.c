@@ -3605,6 +3605,7 @@ void qemuProcessStop(struct qemud_driver *driver,
     qemuDomainObjPrivatePtr priv = vm->privateData;
     virErrorPtr orig_err;
     virDomainDefPtr def;
+    virNetDevVPortProfilePtr vport = NULL;
     int i;
     int logfile = -1;
     char *timestamp;
@@ -3732,8 +3733,12 @@ void qemuProcessStop(struct qemud_driver *driver,
         /* release the physical device (or any other resources used by
          * this interface in the network driver
          */
-        ignore_value(virNetDevTapDeleteInBridgePort(net->ifname,
-                       virDomainNetGetActualVirtPortProfile(net)));
+        vport = virDomainNetGetActualVirtPortProfile(net);
+        if (vport && vport->virtPortType == VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH)
+            ignore_value(virNetDevOpenvswitchRemovePort(
+                                       virDomainNetGetActualBridgeName(net),
+                                       net->ifname));
+
         networkReleaseActualDevice(net);
     }
 

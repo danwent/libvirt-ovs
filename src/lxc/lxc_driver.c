@@ -1106,6 +1106,7 @@ static void lxcVmCleanup(lxc_driver_t *driver,
     virCgroupPtr cgroup;
     int i;
     lxcDomainObjPrivatePtr priv = vm->privateData;
+    virNetDevVPortProfilePtr vport = NULL;
 
     /* now that we know it's stopped call the hook if present */
     if (virHookPresent(VIR_HOOK_DRIVER_LXC)) {
@@ -1134,10 +1135,12 @@ static void lxcVmCleanup(lxc_driver_t *driver,
 
     for (i = 0 ; i < vm->def->nnets ; i++) {
         virDomainNetDefPtr iface = vm->def->nets[i];
-        virNetDevVPortProfilePtr vport = virDomainNetGetActualVirtPortProfile(iface);
+        vport = virDomainNetGetActualVirtPortProfile(iface);
         ignore_value(virNetDevSetOnline(iface->ifname, false));
         if (vport && vport->virtPortType == VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH)
-            ignore_value(virNetDevOpenvswitchRemovePort(iface->ifname));
+            ignore_value(virNetDevOpenvswitchRemovePort(
+                                       virDomainNetGetActualBridgeName(iface),
+                                       iface->ifname));
         ignore_value(virNetDevVethDelete(iface->ifname));
         networkReleaseActualDevice(iface);
     }
@@ -1390,7 +1393,9 @@ cleanup:
             virDomainNetDefPtr iface = def->nets[i];
             virNetDevVPortProfilePtr vport = virDomainNetGetActualVirtPortProfile(iface);
             if (vport && vport->virtPortType == VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH)
-                ignore_value(virNetDevOpenvswitchRemovePort(iface->ifname));
+                ignore_value(virNetDevOpenvswitchRemovePort(
+                                        virDomainNetGetActualBridgeName(iface),
+                                        iface->ifname));
             networkReleaseActualDevice(iface);
         }
     }

@@ -307,21 +307,3 @@ int virNetDevTapCreateInBridgePort(const char *brname,
 
     return errno;
 }
-
-/**
- * virNetDevTapDeleteInBridgePort:
- * @ifname: the interface name (or name template)
- * @ovsport: Open vSwitch specific configuration
- *
- * This function detaches tap device from a bridge.
- *
- * Returns 0 in case of success or -1 on failure
- */
-int virNetDevTapDeleteInBridgePort(char *ifname,
-                                   virNetDevVPortProfilePtr ovsport)
-{
-    int ret = 0;
-    if (ovsport)
-        ret = virNetDevOpenvswitchRemovePort(ifname);
-    return ret;
-}

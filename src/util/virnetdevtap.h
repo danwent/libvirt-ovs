@@ -44,8 +44,5 @@ int virNetDevTapCreateInBridgePort(const char *brname,
     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) ATTRIBUTE_NONNULL(3)
     ATTRIBUTE_RETURN_CHECK;
 
-int virNetDevTapDeleteInBridgePort(char *ifname,
-                                   virNetDevVPortProfilePtr ovsport)
-ATTRIBUTE_NONNULL(1) ATTRIBUTE_RETURN_CHECK;
 
 #endif /* __VIR_NETDEV_TAP_H__ */

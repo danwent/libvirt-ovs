@@ -1246,7 +1246,6 @@ virNetDevOpenvswitchRemovePort;
 virNetDevTapCreate;
 virNetDevTapCreateInBridgePort;
 virNetDevTapDelete;
-virNetDevTapDeleteInBridgePort;
 
 
 # virnetdevveth.h
