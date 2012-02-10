@@ -37,6 +37,7 @@
  * @brname: the bridge name
  * @ifname: the network interface name
  * @macaddr: the mac address of the virtual interface
+ * @ovsport: the ovs specific fields
  *
  * Add an interface to the OVS bridge
  *

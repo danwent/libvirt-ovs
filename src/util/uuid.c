@@ -116,25 +116,6 @@ virUUIDGenerate(unsigned char *uuid)
 }
 
 /**
- * virUUIDGenerateString:
- * @uuid: string of VIR_UUID_STRING_BUFLEN characters to store the UUID
- *
- *
- * Generates a randomized unique identifier
- * Returns 0 in case of success and -1 in case of failure
- */
-int
-virUUIDGenerateStr(char *uuidstr)
-{
-    unsigned char uuid[VIR_UUID_BUFLEN];
-
-    if (virUUIDGenerate(uuid) < 0)
-        return -1;
-    virUUIDFormat(uuid, uuidstr);
-    return 0;
-}
-
-/**
  * virUUIDParse:
  * @uuidstr: zero terminated string representation of the UUID
  * @uuid: array of VIR_UUID_BUFLEN bytes to store the raw UUID

@@ -379,7 +379,6 @@ virDomainNetGetActualBridgeName;
 virDomainNetGetActualDirectDev;
 virDomainNetGetActualDirectMode;
 virDomainNetGetActualVirtPortProfile;
-virDomainNetGetActualOpenvswitchPortPtr;
 virDomainNetGetActualType;
 virDomainNetIndexByMac;
 virDomainNetInsert;
@@ -1146,7 +1145,6 @@ virGetHostUUID;
 virSetHostUUIDStr;
 virUUIDFormat;
 virUUIDGenerate;
-virUUIDGenerateStr;
 virUUIDParse;
 
 

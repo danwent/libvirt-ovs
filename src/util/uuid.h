@@ -30,7 +30,6 @@ int virGetHostUUID(unsigned char *host_uuid) ATTRIBUTE_NONNULL(1);
 int virUUIDIsValid(unsigned char *uuid);
 
 int virUUIDGenerate(unsigned char *uuid);
-int virUUIDGenerateStr(char *struuid);
 
 int virUUIDParse(const char *uuidstr,
                  unsigned char *uuid)
